@@ -1,0 +1,122 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- Cria uma nova ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "MiniScreenGui"
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Cria um Frame para o menu
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0.1, 0, 0.1, 0)
+frame.Position = UDim2.new(0, 10, 0, 10)
+frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+frame.BackgroundTransparency = 0.5
+frame.Parent = screenGui
+
+-- Adiciona cantos arredondados ao Frame
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 15)
+corner.Parent = frame
+
+-- Cria um boto para alternar entre noclip e unnoclip
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(1, 0, 1, 0)
+button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+button.Text = "ON"
+button.TextColor3 = Color3.fromRGB(0, 255, 0)
+button.TextScaled = true
+button.Parent = frame
+
+-- Adiciona cantos arredondados ao boto
+local buttonCorner = Instance.new("UICorner")
+buttonCorner.CornerRadius = UDim.new(0, 15)
+buttonCorner.Parent = button
+
+-- Funo para executar NoClip
+local function executeNoclip()
+    -- Cdigo Lua para o NoClip
+    local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+local function isWall(part)
+  if part:IsA("BasePart") and part.CanCollide and part.Name ~= "Baseplate" and part.Name ~= "Ground" then
+    return true
+  end
+  return false
+end
+
+game:GetService("RunService").RenderStepped:Connect(function()
+  for _, part in ipairs(character:GetDescendants()) do
+    if part:IsA("BasePart") then
+      part.CanCollide = false
+    end
+  end
+  for _, part in ipairs(workspace:GetDescendants()) do
+    if isWall(part) then
+      part.CanCollide = false
+    end
+  end
+end)
+end
+
+-- Funo para executar UnNoClip
+local function executeUnnoclip()
+    -- Cdigo Lua para o UnNoClip
+    -- Script de Unnoclip e Reset com Salvamento de Coordenadas
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local noclipEnabled = false
+
+for _, v in pairs(character:GetDescendants()) do
+    if v:IsA("BasePart") and not v.CanCollide then
+        v.CanCollide = true
+    end
+end
+
+-- Funo para salvar as coordenadas da morte
+local function saveDeathPosition()
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        player:SetAttribute("LastDeathPosition", hrp.Position)
+    end
+end
+
+-- Conecta a funo ao evento Died
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+if humanoid then
+    humanoid.Died:Connect(saveDeathPosition)
+    humanoid.Health = 0  -- Reseta o personagem ao definir a sade para 0
+end
+
+-- Teleporta o personagem para as coordenadas da ltima morte ao respawnar
+player.CharacterAdded:Connect(function(newCharacter)
+    local lastDeathPosition = player:GetAttribute("LastDeathPosition")
+    if lastDeathPosition then
+        local hrp = newCharacter:WaitForChild("HumanoidRootPart")
+        hrp.CFrame = CFrame.new(lastDeathPosition)
+    end
+end)
+end
+
+-- Varivel para controlar o estado do boto
+local isNoclip = true
+
+button.MouseButton1Click:Connect(function()
+    if isNoclip then
+        -- Executa o script noclip
+        executeNoclip()
+        -- Atualiza o boto para "OFF"
+        button.Text = "OFF"
+        button.TextColor3 = Color3.fromRGB(255, 0, 0)
+    else
+        -- Executa o script unnoclip
+        executeUnnoclip()
+        -- Atualiza o boto para "ON"
+        button.Text = "ON"
+        button.TextColor3 = Color3.fromRGB(0, 255, 0)
+    end
+    isNoclip = not isNoclip
+end)
+
+print("MiniScreenGui carregado e pronto para uso")
