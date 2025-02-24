@@ -1,0 +1,34 @@
+-- Script de Unnoclip e Reset com Salvamento de Coordenadas
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local noclipEnabled = false
+
+for _, v in pairs(character:GetDescendants()) do
+    if v:IsA("BasePart") and not v.CanCollide then
+        v.CanCollide = true
+    end
+end
+
+-- Função para salvar as coordenadas da morte
+local function saveDeathPosition()
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        player:SetAttribute("LastDeathPosition", hrp.Position)
+    end
+end
+
+-- Conecta a função ao evento Died
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+if humanoid then
+    humanoid.Died:Connect(saveDeathPosition)
+    humanoid.Health = 0  -- Reseta o personagem ao definir a saúde para 0
+end
+
+-- Teleporta o personagem para as coordenadas da última morte ao respawnar
+player.CharacterAdded:Connect(function(newCharacter)
+    local lastDeathPosition = player:GetAttribute("LastDeathPosition")
+    if lastDeathPosition then
+        local hrp = newCharacter:WaitForChild("HumanoidRootPart")
+        hrp.CFrame = CFrame.new(lastDeathPosition)
+    end
+end)
